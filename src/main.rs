@@ -91,7 +91,7 @@ fn App() -> impl IntoView {
                                 ")"
                             </p>
                             <p>
-                                <b>"Contribution: " </b>
+                                <b>"Contribution: "</b>
                                 {user.contribution.unwrap_or(0)}
                             </p>
                             <p>
