@@ -1,0 +1,13 @@
+[package]
+name = "todo-app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+leptos = { version = "0.7.8", features = ["csr"] }
+reqwest = { version = "0.12.15", features = ["json"] }
+thaw = { version = "0.4.4", features = ["csr"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+icondata = "0.5.0"
+tokio = "1.44.1"

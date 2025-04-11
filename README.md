@@ -1,0 +1,3 @@
+```bash
+trunk serve --open
+```
