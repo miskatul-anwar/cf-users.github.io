@@ -69,13 +69,13 @@ fn App() -> impl IntoView {
         let rank_color = get_rank_color(&rank);
 
         view! {
-            <Layout has_sider=true>
-                <LayoutSider>
+            <Flex >
+                <Flex>
                     <img
                         style="width: 100%; display: block; margin: auto;"
                         src=user.titlePhoto.unwrap_or(String::from(""))
                     />
-                </LayoutSider>
+                </Flex>
                 <Layout>
                     <LayoutHeader attr:style=" padding: 20px;">
                         <p style="font-size:1.5em;">{user.handle.clone()}</p>
@@ -107,21 +107,19 @@ fn App() -> impl IntoView {
 
                     </Layout>
                 </Layout>
-            </Layout>
+            </Flex>
         }
     };
 
     view! {
         <ConfigProvider>
-            <Card>
-                <CardPreview>
-                    <picture>
+            <Flex vertical=true>
+                <picture>
                     <img
                         src="https://codeforces.org/s/85604/images/codeforces-sponsored-by-ton.png"
-                        style="width: 50%; display: block; margin: auto;"
+                        style="width: 20%; display: block; margin: auto;"
                     />
-                    </picture>
-                </CardPreview>
+                </picture>
 
                 <div style="max-width: fit-content; margin: auto;">
                     <Flex gap=FlexGap::Large align=FlexAlign::Center>
@@ -140,16 +138,16 @@ fn App() -> impl IntoView {
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <div style="max-width: fit-content; margin-left: auto; margin-right:auto">
-                            <h2>"User Info"</h2>
-                        </div>
-                    </CardHeader>
+                    <Flex vertical=true>
+                    <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
+                            <h2 style="color:gray;">"User Info"</h2>
+                            </div>
+                    </Flex>
                     <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
                         {display_user_info}
                     </div>
                 </Card>
-            </Card>
+            </Flex>
         </ConfigProvider>
     }
 }
