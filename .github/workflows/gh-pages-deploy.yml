@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # Required to push to gh-pages
-  pages: write      # Required to deploy to GitHub Pages
-  id-token: write   # Required for OIDC authentication
+  contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: "pages"
@@ -25,10 +25,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - uses: actions/checkout@v4
 
-      # Install stable Rust with Clippy and Rustfmt
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -40,37 +38,32 @@ jobs:
       - name: Run Linting
         run: cargo clippy && cargo fmt
 
-      # Install Trunk
       - name: Install Trunk
         run: |
           wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz \
           | tar -xzf-
 
-      # Build with Trunk using public URL (important for GitHub Pages)
       - name: Build Project
         run: ./trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
 
-      # Optional dummy artifact upload to fix missing download info error
-      - name: Upload dummy artifact to load action
-        uses: actions/upload-artifact@v3
+      # 👇 Forces GitHub to fetch the upload-artifact action
+      - name: Force fetch of upload-artifact
+        uses: actions/upload-artifact@v2
         with:
           name: dummy
           path: README.md
           retention-days: 1
 
-      # Setup GitHub Pages
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
         with:
           enablement: true
 
-      # Upload the generated site (dist folder)
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           path: './dist'
 
-      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v3
