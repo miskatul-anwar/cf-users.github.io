@@ -1,5 +1,3 @@
-# For more info re: vercel action see:
-# https://github.com/amondnet/vercel-action
 
 name: Leptos CSR Vercel Preview
 
