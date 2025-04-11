@@ -1,4 +1,4 @@
-name: Release to Github Pages
+name: Release to GitHub Pages
 
 on:
   push:
@@ -6,19 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # for committing to gh-pages branch.
-  pages: write
-  id-token: write
+  contents: write   # Required to push to gh-pages
+  pages: write      # Required to deploy to GitHub Pages
+  id-token: write   # Required for OIDC authentication
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
   Github-Pages-Release:
-
     timeout-minutes: 10
 
     environment:
@@ -28,10 +25,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4 # repo checkout
+      # Checkout repo
+      - uses: actions/checkout@v4
 
-      # Install Rust Nightly Toolchain, with Clippy & Rustfmt
-      - name: Install nightly Rust
+      # Install stable Rust with Clippy and Rustfmt
+      - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -39,50 +37,40 @@ jobs:
       - name: Add WASM target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: lint
-        run: cargo clippy & cargo fmt
+      - name: Run Linting
+        run: cargo clippy && cargo fmt
 
+      # Install Trunk
+      - name: Install Trunk
+        run: |
+          wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz \
+          | tar -xzf-
 
-      # If using tailwind...
-      # - name: Download and install tailwindcss binary
-      #   run: npm install -D tailwindcss && npx tailwindcss -i <INPUT/PATH.css> -o <OUTPUT/PATH.css>  # run tailwind
-
-
-      - name: Download and install Trunk binary
-        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-
-      - name: Build with Trunk
-        # "${GITHUB_REPOSITORY#*/}" evaluates into the name of the repository
-        # using --public-url something will allow trunk to modify all the href paths like from favicon.ico to repo_name/favicon.ico .
-        # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
-        # relatively as favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
-        # will obviously return error 404 not found.
+      # Build with Trunk using public URL (important for GitHub Pages)
+      - name: Build Project
         run: ./trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
 
+      # Optional dummy artifact upload to fix missing download info error
+      - name: Upload dummy artifact to load action
+        uses: actions/upload-artifact@v3
+        with:
+          name: dummy
+          path: README.md
+          retention-days: 1
 
-      # Deploy to gh-pages branch
-      # - name: Deploy 🚀
-      #   uses: JamesIves/github-pages-deploy-action@v4
-      #   with:
-      #     folder: dist
-
-
-      # Deploy with Github Static Pages
-
+      # Setup GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:
           enablement: true
-          # token:
 
+      # Upload the generated site (dist folder)
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          # Upload dist dir
           path: './dist'
 
+      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v3
-        with:
-          enablement: true
