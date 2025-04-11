@@ -115,10 +115,12 @@ fn App() -> impl IntoView {
         <ConfigProvider>
             <Card>
                 <CardPreview>
+                    <picture>
                     <img
                         src="https://codeforces.org/s/85604/images/codeforces-sponsored-by-ton.png"
                         style="width: 50%; display: block; margin: auto;"
                     />
+                    </picture>
                 </CardPreview>
 
                 <div style="max-width: fit-content; margin: auto;">
