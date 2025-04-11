@@ -69,7 +69,7 @@ fn App() -> impl IntoView {
         let rank_color = get_rank_color(&rank);
 
         view! {
-            <Flex >
+            <Flex>
                 <Flex>
                     <img
                         style="width: 100%; display: block; margin: auto;"
@@ -92,7 +92,6 @@ fn App() -> impl IntoView {
                             </p>
                             <p>
                                 <b>"Contribution: "</b>
-                                "+"
                                 {user.contribution.unwrap_or(0)}
                             </p>
                             <p>
@@ -139,9 +138,9 @@ fn App() -> impl IntoView {
 
                 <Card>
                     <Flex vertical=true>
-                    <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
+                        <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
                             <h2 style="color:gray;">"User Info"</h2>
-                            </div>
+                        </div>
                     </Flex>
                     <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
                         {display_user_info}
