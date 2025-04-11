@@ -69,7 +69,7 @@ fn App() -> impl IntoView {
         let rank_color = get_rank_color(&rank);
 
         view! {
-            <Flex >
+            <Flex>
                 <Flex>
                     <img
                         style="width: 100%; display: block; margin: auto;"
@@ -78,8 +78,11 @@ fn App() -> impl IntoView {
                 </Flex>
                 <Layout>
                     <LayoutHeader attr:style=" padding: 20px;">
-                        <p style="font-size:1.5em;">{user.handle.clone()}</p>
-                        <p style=format!("color: {};", rank_color)>{rank}</p>
+                        <Card>
+
+                            <p style="font-size:1.5em;">{user.handle.clone()}</p>
+                            <p style=format!("color: {};", rank_color)>{rank}</p>
+                        </Card>
                     </LayoutHeader>
                     <Layout attr:style=" padding: 20px;">
                         <>
@@ -139,9 +142,9 @@ fn App() -> impl IntoView {
 
                 <Card>
                     <Flex vertical=true>
-                    <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
+                        <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
                             <h2 style="color:gray;">"User Info"</h2>
-                            </div>
+                        </div>
                     </Flex>
                     <div style="max-width: fit-content; margin-left: auto; margin-right:auto;">
                         {display_user_info}
