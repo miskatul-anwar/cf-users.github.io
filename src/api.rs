@@ -6,7 +6,7 @@
 //! problemset.problems, recentActions, user.blogEntries, user.info,
 //! user.ratedList, user.rating, user.status.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const API: &str = "https://codeforces.com/api";
 
@@ -75,7 +75,7 @@ async fn get<T: for<'de> Deserialize<'de>>(
 // Data models (field names mirror the JSON exactly)
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct User {
     pub handle: String,
     pub email: Option<String>,
@@ -109,7 +109,7 @@ pub struct User {
     pub title_photo: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RatingChange {
     #[serde(default)]
     pub contest_id: i64,
@@ -127,13 +127,13 @@ pub struct RatingChange {
     pub new_rating: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Member {
     #[serde(default)]
     pub handle: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Party {
     #[serde(default)]
     pub members: Vec<Member>,
@@ -155,7 +155,7 @@ impl Party {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Problem {
     #[serde(default)]
     pub contest_id: Option<i64>,
@@ -193,7 +193,7 @@ impl Problem {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ProblemStatistics {
     #[serde(default)]
     pub solved_count: i32,
@@ -201,7 +201,7 @@ pub struct ProblemStatistics {
     pub attempted_count: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Submission {
     #[serde(default)]
     pub id: i64,
@@ -238,7 +238,7 @@ impl Submission {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Contest {
     #[serde(default)]
     pub id: i64,
@@ -258,7 +258,7 @@ pub struct Contest {
     pub relative_time_seconds: Option<i64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ProblemResult {
     #[serde(default)]
     pub points: f64,
@@ -272,7 +272,7 @@ pub struct ProblemResult {
     pub best_submission_time_seconds: Option<i64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct StandingsRow {
     #[serde(default)]
     pub position: i32,
@@ -290,7 +290,7 @@ pub struct StandingsRow {
     pub problem_results: Vec<ProblemResult>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ContestStandingsResult {
     #[serde(default)]
     pub contest: Contest,
@@ -300,7 +300,7 @@ pub struct ContestStandingsResult {
     pub rows: Vec<StandingsRow>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Hack {
     #[serde(default)]
     pub id: i64,
@@ -314,7 +314,7 @@ pub struct Hack {
     pub verdict: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct BlogEntry {
     #[serde(default)]
     pub id: i64,
@@ -334,7 +334,7 @@ pub struct BlogEntry {
     pub tags: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Comment {
     #[serde(default)]
     pub id: i64,
@@ -350,7 +350,7 @@ pub struct Comment {
     pub rating: Option<i32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RecentAction {
     #[serde(default)]
     pub time_seconds: i64,
@@ -361,7 +361,7 @@ pub struct RecentAction {
 }
 
 /// `problemset.problems` returns two parallel arrays.
-#[derive(Debug, Clone, PartialEq, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ProblemSetResult {
     #[serde(default)]
     pub problems: Vec<Problem>,
@@ -379,22 +379,6 @@ pub async fn user_info(handles: &[&str]) -> Result<Vec<User>, String> {
         &[
             ("handles", handles.join(";")),
             ("checkHistoricHandles", "false".into()),
-        ],
-    )
-    .await
-}
-
-pub async fn user_rating(handle: &str) -> Result<Vec<RatingChange>, String> {
-    get("user.rating", &[("handle", handle.into())]).await
-}
-
-pub async fn user_status(handle: &str, from: u32, count: u32) -> Result<Vec<Submission>, String> {
-    get(
-        "user.status",
-        &[
-            ("handle", handle.into()),
-            ("from", from.to_string()),
-            ("count", count.to_string()),
         ],
     )
     .await
@@ -418,10 +402,6 @@ pub async fn user_blog_entries(handle: &str) -> Result<Vec<BlogEntry>, String> {
 // NOTE: there is no `user.comments` in the public API — the method 404s with an
 // HTML page. Per-user comment history is therefore not fetchable; blog-level
 // comments remain available via `blogEntry.comments`.
-
-pub async fn contest_list() -> Result<Vec<Contest>, String> {
-    get("contest.list", &[("gym", "false".into())]).await
-}
 
 pub async fn contest_standings(
     contest_id: i64,
@@ -471,20 +451,6 @@ pub async fn contest_status(
     get("contest.status", &params).await
 }
 
-pub async fn problemset_problems(tags: &[&str]) -> Result<ProblemSetResult, String> {
-    let params: Vec<(&str, String)> = vec![("tags", tags.join(";"))];
-    let mut res: ProblemSetResult = get::<ProblemSetResult>("problemset.problems", &params).await?;
-    // The API returns statistics aligned index-for-index with problems.
-    for (p, st) in res.problems.iter_mut().zip(&res.problem_statistics) {
-        p.solved_count = st.solved_count;
-    }
-    Ok(res)
-}
-
-pub async fn recent_actions(max_count: u32) -> Result<Vec<RecentAction>, String> {
-    get("recentActions", &[("maxCount", max_count.to_string())]).await
-}
-
 pub async fn blog_entry_view(entry_id: i64) -> Result<BlogEntry, String> {
     get("blogEntry.view", &[("blogEntryId", entry_id.to_string())]).await
 }
@@ -493,6 +459,150 @@ pub async fn blog_entry_comments(entry_id: i64) -> Result<Vec<Comment>, String> 
     get(
         "blogEntry.comments",
         &[("blogEntryId", entry_id.to_string())],
+    )
+    .await
+}
+
+// ---------------------------------------------------------------------------
+// Cached fetchers (localStorage TTL cache so heavy endpoints load instantly
+// on repeat visits; quota errors are swallowed silently by ls_set).
+// ---------------------------------------------------------------------------
+
+use crate::storage::{ls_get, ls_set, now_secs};
+
+fn cache_get(key: &str, ttl_secs: i64) -> Option<String> {
+    let raw = ls_get(&format!("cfx:{key}"))?;
+    let (ts, json) = raw.split_once('\u{1}')?;
+    let ts: i64 = ts.parse().ok()?;
+    (now_secs() - ts < ttl_secs).then(|| json.to_string())
+}
+
+async fn get_cached<T: serde::de::DeserializeOwned + serde::Serialize + Clone>(
+    key: &str,
+    ttl_secs: i64,
+    method: &str,
+    params: &[(&str, String)],
+) -> Result<T, String> {
+    if let Some(json) = cache_get(key, ttl_secs)
+        && let Ok(v) = serde_json::from_str::<T>(&json)
+    {
+        return Ok(v);
+    }
+    let v = get(method, params).await?;
+    if let Ok(json) = serde_json::to_string(&v) {
+        ls_set(&format!("cfx:{key}"), &format!("{}\u{1}{json}", now_secs()));
+    }
+    Ok(v)
+}
+
+/// Rating history cached for 10 minutes.
+pub async fn user_rating_cached(handle: &str) -> Result<Vec<RatingChange>, String> {
+    get_cached(
+        &format!("rating:{handle}"),
+        600,
+        "user.rating",
+        &[("handle", handle.into())],
+    )
+    .await
+}
+
+/// Submission history cached for 10 minutes (analytics pulls up to a few
+/// thousand rows, well worth persisting between visits).
+pub async fn user_status_cached(handle: &str, count: u32) -> Result<Vec<Submission>, String> {
+    get_cached(
+        &format!("status:{handle}:{count}"),
+        600,
+        "user.status",
+        &[
+            ("handle", handle.into()),
+            ("from", "1".into()),
+            ("count", count.to_string()),
+        ],
+    )
+    .await
+}
+
+/// Contest list cached for 6 hours (~1.5 MB JSON).
+pub async fn contest_list_cached() -> Result<Vec<Contest>, String> {
+    let mut c: Vec<Contest> = get_cached(
+        "contests",
+        21_600,
+        "contest.list",
+        &[("gym", "false".into())],
+    )
+    .await?;
+    c.sort_by_key(|c| c.start_time_seconds.unwrap_or(0));
+    Ok(c)
+}
+
+/// Compact problem row for the localStorage cache (~1 MB instead of ~8 MB).
+#[derive(serde::Serialize, serde::Deserialize)]
+struct CProb(i64, String, String, i32, i32, Vec<String>);
+
+fn problemset_cache_key(tags: &[&str]) -> String {
+    if tags.is_empty() {
+        "pset:all".into()
+    } else {
+        format!("pset:{}", tags.join("+"))
+    }
+}
+
+/// `problemset.problems` cached for 24 hours in a compact representation.
+pub async fn problemset_problems_cached() -> Result<ProblemSetResult, String> {
+    let key = problemset_cache_key(&[]);
+    if let Some(json) = cache_get(&key, 86_400)
+        && let Ok(list) = serde_json::from_str::<Vec<CProb>>(&json)
+    {
+        let problems = list
+            .into_iter()
+            .map(|CProb(cid, index, name, rating, solved, tags)| Problem {
+                contest_id: (cid > 0).then_some(cid),
+                index,
+                name,
+                rating: (rating > 0).then_some(rating),
+                solved_count: solved,
+                tags,
+                ..Default::default()
+            })
+            .collect();
+        return Ok(ProblemSetResult {
+            problems,
+            problem_statistics: Vec::new(),
+        });
+    }
+    let res = get::<ProblemSetResult>("problemset.problems", &[("tags", String::new())]).await?;
+    // The API returns statistics aligned index-for-index with problems.
+    let mut res = res;
+    for (p, st) in res.problems.iter_mut().zip(&res.problem_statistics) {
+        p.solved_count = st.solved_count;
+    }
+    let compact: Vec<CProb> = res
+        .problems
+        .iter()
+        .map(|p| {
+            CProb(
+                p.contest_id.unwrap_or(-1),
+                p.index.clone(),
+                p.name.clone(),
+                p.rating.unwrap_or(0),
+                p.solved_count,
+                p.tags.clone(),
+            )
+        })
+        .collect();
+    if let Ok(json) = serde_json::to_string(&compact) {
+        ls_set(&format!("cfx:{key}"), &format!("{}\u{1}{json}", now_secs()));
+    }
+    Ok(res)
+}
+
+/// Recent actions cached for 3 minutes to keep the feed snappy on tab switches.
+pub async fn recent_actions_cached(max_count: u32) -> Result<Vec<RecentAction>, String> {
+    get_cached(
+        &format!("recent:{max_count}"),
+        180,
+        "recentActions",
+        &[("maxCount", max_count.to_string())],
     )
     .await
 }

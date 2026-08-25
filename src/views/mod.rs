@@ -1,3 +1,4 @@
+pub mod compare_view;
 pub mod contests_view;
 pub mod problems_view;
 pub mod recent_view;

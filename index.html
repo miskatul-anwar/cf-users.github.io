@@ -3,11 +3,70 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Codeforces Explorer</title>
+    <title>Codeforces Explorer — analytics, comparisons &amp; contest insights</title>
     <meta
       name="description"
-      content="Explore Codeforces: user profiles, rating history, contests, standings, problems, hacks, blogs and recent actions - powered by the Codeforces API."
+      content="Explore Codeforces like never before: rich user profiles with activity heatmaps and practice recommendations, side-by-side rating comparison, live contest countdowns, standings, problem search and more."
     />
+    <meta name="theme-color" content="#0078d4" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231b1a19'/%3E%3Crect x='6' y='17' width='5' height='9' rx='1.5' fill='%23808080'/%3E%3Crect x='13.5' y='12' width='5' height='14' rx='1.5' fill='%230078d4'/%3E%3Crect x='21' y='6' width='5' height='20' rx='1.5' fill='%23aa00aa'/%3E%3C/svg%3E"
+    />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Codeforces Explorer" />
+    <meta
+      property="og:description"
+      content="User analytics, heatmaps, practice recommendations, rating comparison, live contest countdowns and problem search for Codeforces."
+    />
+    <meta name="twitter:card" content="summary" />
+    <link rel="preconnect" href="https://codeforces.com" crossorigin />
+    <style>
+      html { color-scheme: light dark; }
+      body { margin: 0; }
+      #cfx-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        font-family: system-ui, sans-serif;
+        background: #faf9f8;
+        color: #555;
+        z-index: 9999;
+        transition: opacity 0.25s ease;
+      }
+      #cfx-splash .ring {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 4px solid rgba(0, 120, 212, 0.2);
+        border-top-color: #0078d4;
+        animation: cfx-spin 0.9s linear infinite;
+      }
+      #cfx-splash b {
+        background: linear-gradient(90deg, #0078d4, #aa00aa);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 1.15rem;
+      }
+      @keyframes cfx-spin {
+        to { transform: rotate(360deg); }
+      }
+      @media (prefers-color-scheme: dark) {
+        #cfx-splash { background: #1b1a19; color: #bbb; }
+      }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <div id="cfx-splash">
+      <div class="ring"></div>
+      <b>Codeforces Explorer</b>
+      <span style="font-size:0.85rem;">Loading the app…</span>
+    </div>
+  </body>
 </html>

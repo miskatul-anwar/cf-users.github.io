@@ -84,7 +84,7 @@ pub fn format_date(secs: i64) -> String {
 }
 
 /// Days-since-epoch to proleptic Gregorian date (Howard Hinnant's algorithm).
-fn civil_from_days(z: i64) -> (i64, u32, u32) {
+pub fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let z = z + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);
@@ -160,4 +160,125 @@ pub fn truncate(s: &str, max: usize) -> String {
         let cut: String = s.chars().take(max).collect();
         format!("{cut}\u{2026}")
     }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers added for analytics, routing and richer feeds
+// ---------------------------------------------------------------------------
+
+/// Split a raw input string into trimmed, non-empty handles (`,` or `;`).
+pub fn parse_handles(raw: &str) -> Vec<String> {
+    raw.split([',', ';'])
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// Relative time like "3m ago", "2h ago", "5d ago" or a date fallback.
+pub fn rel_time(secs: i64, now: i64) -> String {
+    let d = now - secs;
+    match d {
+        ..=0 => "now".into(),
+        1..=59 => format!("{d}s ago"),
+        60..=3599 => format!("{}m ago", d / 60),
+        3600..=86_399 => format!("{}h ago", d / 3600),
+        86_400..=2_591_999 => format!("{}d ago", d / 86_400),
+        _ => format_date(secs),
+    }
+}
+
+/// Humanized "member for ..." text from registration unix seconds.
+pub fn member_since(secs: i64, now: i64) -> String {
+    let days = ((now - secs).max(0)) / 86_400;
+    let years = days / 365;
+    if years >= 1 && days % 365 > 180 {
+        format!("{years}\u{00bd} yrs")
+    } else if years >= 1 {
+        format!("{years} yr{} ago", if years > 1 { "s" } else { "" })
+    } else if days >= 1 {
+        format!("{days} day{} ago", if days > 1 { "s" } else { "" })
+    } else {
+        "today".into()
+    }
+}
+
+/// Percentage of `a` out of `b`, safe against division by zero.
+pub fn pct(a: i64, b: i64) -> f64 {
+    if b <= 0 {
+        0.0
+    } else {
+        a as f64 / b as f64 * 100.0
+    }
+}
+
+/// Best-effort contest family detected from the title.
+pub fn contest_div(name: &str) -> &'static str {
+    let n = name.to_lowercase();
+    if n.contains("div. 4") {
+        "Div. 4"
+    } else if n.contains("div. 3") {
+        "Div. 3"
+    } else if n.contains("div. 2") {
+        "Div. 2"
+    } else if n.contains("div. 1") {
+        "Div. 1"
+    } else if n.contains("educational") {
+        "Educational"
+    } else if n.contains("global") {
+        "Global"
+    } else if n.contains("icpc") || n.contains("regional") {
+        "ICPC"
+    } else if n.contains("kotlin") {
+        "Kotlin"
+    } else if n.contains("marathon") {
+        "Marathon"
+    } else if n.contains("lunch") {
+        "Lunchtime"
+    } else if n.contains("beginner") {
+        "Beginner"
+    } else {
+        "Other"
+    }
+}
+
+/// A stable key identifying a problem across the API ("1234A").
+pub fn problem_key(contest_id: Option<i64>, index: &str) -> String {
+    match contest_id {
+        Some(id) => format!("{id}{index}"),
+        None => index.to_string(),
+    }
+}
+
+/// Day number (days since epoch, UTC) for a unix timestamp.
+pub fn day_of(secs: i64) -> i64 {
+    secs.div_euclid(86_400)
+}
+
+/// Weekday index for a day number (0 = Sunday .. 6 = Saturday).
+pub fn weekday(day: i64) -> u32 {
+    // 1970-01-01 was a Thursday (4).
+    (day + 4).rem_euclid(7) as u32
+}
+
+/// Short weekday-month-day label for tooltips, e.g. "Mon Mar 04".
+pub fn day_label(day: i64) -> String {
+    let (y, m, d) = civil_from_days(day);
+    const MONTHS: [&str; 12] = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    // Day-of-week from the civil date (Sakamoto's algorithm), 0 = Sunday.
+    let t = if m < 3 { y - 1 } else { y };
+    let wd = (t + t / 4 - t / 100
+        + t / 400
+        + [0i64, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4][(m - 1) as usize]
+        + d as i64)
+        .rem_euclid(7);
+    const DAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    format!(
+        "{} {} {:02}",
+        DAYS[wd as usize],
+        MONTHS[(m - 1) as usize],
+        d
+    )
 }
