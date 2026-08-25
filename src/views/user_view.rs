@@ -1,5 +1,5 @@
 //! User tab: profile lookup (multiple handles), rating history,
-//! recent submissions, blog entries and comments.
+//! recent submissions and blog entries.
 
 use crate::api;
 use crate::components::*;
@@ -16,18 +16,16 @@ pub fn UserView() -> impl IntoView {
     let rating_changes = RwSignal::new(Vec::<api::RatingChange>::new());
     let submissions = RwSignal::new(Vec::<api::Submission>::new());
     let blogs = RwSignal::new(Vec::<api::BlogEntry>::new());
-    let comments = RwSignal::new(Vec::<api::Comment>::new());
 
     let sub_count = RwSignal::new(String::from("50"));
 
     // Per-section loading / error -------------------------------------------
-    let loading = RwSignal::new([false; 5]);
+    let loading = RwSignal::new([false; 4]);
     let set_loading = move |i: usize, v: bool| loading.update(|a| a[i] = v);
     let err_info = RwSignal::new(String::new());
     let err_rating = RwSignal::new(String::new());
     let err_subs = RwSignal::new(String::new());
     let err_blogs = RwSignal::new(String::new());
-    let err_comments = RwSignal::new(String::new());
 
     let last_handles = RwSignal::new(Vec::<String>::new());
 
@@ -47,7 +45,6 @@ pub fn UserView() -> impl IntoView {
         err_rating.set(String::new());
         err_subs.set(String::new());
         err_blogs.set(String::new());
-        err_comments.set(String::new());
         last_handles.set(handles.clone());
 
         // user.info supports multiple handles in one request.
@@ -88,23 +85,13 @@ pub fn UserView() -> impl IntoView {
         });
 
         set_loading(3, true);
-        let h = primary.clone();
+        let h = primary;
         spawn_local(async move {
             match api::user_blog_entries(&h).await {
                 Ok(b) => blogs.set(b),
                 Err(e) => err_blogs.set(e),
             }
             set_loading(3, false);
-        });
-
-        set_loading(4, true);
-        let h = primary;
-        spawn_local(async move {
-            match api::user_comments(&h).await {
-                Ok(c) => comments.set(c),
-                Err(e) => err_comments.set(e),
-            }
-            set_loading(4, false);
         });
     };
 
@@ -332,35 +319,6 @@ pub fn UserView() -> impl IntoView {
                             view! { <Empty text="No blog entries found.".into()/> }.into_any()
                         } else {
                             view! { <BlogList blogs=blogs.get_untracked() on_open=open_blog/> }.into_any()
-                        }
-                    }}
-
-                    <SectionHeader title="Comments".into()/>
-                    {move || -> AnyView {
-                        if loading.get()[4] {
-                            view! { <Loading label="Loading comments".into()/> }.into_any()
-                        } else if !err_comments.get().is_empty() {
-                            view! { <ErrorBar message=err_comments/> }.into_any()
-                        } else if comments.with(|c| c.is_empty()) {
-                            view! { <Empty text="No comments found.".into()/> }.into_any()
-                        } else {
-                            let items = comments.get_untracked().into_iter().map(|c| {
-                                let text = truncate(&strip_html(&c.text), 220);
-                                let who = c.commentator_handle.clone();
-                                let when = format_time(c.creation_time_seconds);
-                                let link = format!("https://codeforces.com/blog/entry/{}", c.entry_id);
-                                let r = c.rating.unwrap_or(0);
-                                view! {
-                                    <div style="padding:10px;margin-bottom:8px;border:1px solid #eee;border-radius:6px;">
-                                        <p style="white-space:pre-wrap;">{text}</p>
-                                        <Caption1>
-                                            <a href=link target="_blank" rel="noopener">{who}" · "{when}</a>
-                                            {(r != 0).then(|| view!{ <span style="margin-left:8px;font-weight:600;">"\u{2605} "{r}</span> })}
-                                        </Caption1>
-                                    </div>
-                                }
-                            }).collect_view();
-                            view! { <div>{items}</div> }.into_any()
                         }
                     }}
                 </>

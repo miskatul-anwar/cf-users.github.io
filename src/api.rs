@@ -3,8 +3,8 @@
 //! Covers every endpoint that does not require an API key:
 //! blogEntry.comments, blogEntry.view, contest.hacks, contest.list,
 //! contest.ratingChanges, contest.standings, contest.status,
-//! problemset.problems, recentActions, user.blogEntries, user.comments,
-//! user.info, user.ratedList, user.rating, user.status.
+//! problemset.problems, recentActions, user.blogEntries, user.info,
+//! user.ratedList, user.rating, user.status.
 
 use serde::Deserialize;
 
@@ -19,7 +19,8 @@ struct ApiResponse<T> {
     status: String,
     #[serde(default)]
     comment: Option<String>,
-    result: T,
+    /// FAILED replies omit `result` entirely; a missing Option reads as None.
+    result: Option<T>,
 }
 
 fn percent_encode(s: &str) -> String {
@@ -51,12 +52,21 @@ async fn get<T: for<'de> Deserialize<'de>>(
     let resp = reqwest::get(&url)
         .await
         .map_err(|e| format!("Network error: {e}"))?;
-    let api: ApiResponse<T> = resp
-        .json()
+    let http = resp.status();
+    // Application errors arrive as JSON (usually with HTTP 400), while a dead
+    // endpoint serves an HTML error page; parse first so FAILED comments are
+    // surfaced, and only fall back to the raw status if the body is not JSON.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Failed to parse Codeforces response: {e}"))?;
+        .map_err(|e| format!("Network error: {e}"))?;
+    let api: ApiResponse<T> = serde_json::from_str(&body).map_err(|_| {
+        format!("Codeforces returned an invalid response for {method} (HTTP {http})")
+    })?;
     match api.status.as_str() {
-        "OK" => Ok(api.result),
+        "OK" => api
+            .result
+            .ok_or_else(|| format!("Codeforces response for {method} is missing its result")),
         _ => Err(api.comment.unwrap_or_else(|| "Unknown error".into())),
     }
 }
@@ -405,9 +415,9 @@ pub async fn user_blog_entries(handle: &str) -> Result<Vec<BlogEntry>, String> {
     get("user.blogEntries", &[("handle", handle.into())]).await
 }
 
-pub async fn user_comments(handle: &str) -> Result<Vec<Comment>, String> {
-    get("user.comments", &[("handle", handle.into())]).await
-}
+// NOTE: there is no `user.comments` in the public API — the method 404s with an
+// HTML page. Per-user comment history is therefore not fetchable; blog-level
+// comments remain available via `blogEntry.comments`.
 
 pub async fn contest_list() -> Result<Vec<Contest>, String> {
     get("contest.list", &[("gym", "false".into())]).await

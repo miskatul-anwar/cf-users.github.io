@@ -10,7 +10,7 @@ Every public (unauthenticated) Codeforces API endpoint is supported:
 
 | Tab | Features | Endpoints |
 | --- | --- | --- |
-| **User** | Profile cards for multiple handles at once, rating history chart + stats, recent submissions with count selector, blog entries with full-text viewer, comment history | `user.info`, `user.rating`, `user.status`, `user.blogEntries`, `user.comments`, `blogEntry.view`, `blogEntry.comments` |
+| **User** | Profile cards for multiple handles at once, rating history chart + stats, recent submissions with count selector, blog entries with full-text viewer and comment thread | `user.info`, `user.rating`, `user.status`, `user.blogEntries`, `blogEntry.view`, `blogEntry.comments` |
 | **Contests** | Full contest list with phase/name filters and pagination; per-contest inspector with standings (rank/handles/unofficial filters), rating changes summary, hacks feed, submission browser | `contest.list`, `contest.standings`, `contest.ratingChanges`, `contest.hacks`, `contest.status` |
 | **Problems** | Whole problem set with tag / rating-range / name filters, solved-count sorting, pagination | `problemset.problems` |
 | **Recent** | Global recent-actions feed and the complete rated list with search + pagination | `recentActions`, `user.ratedList` |
