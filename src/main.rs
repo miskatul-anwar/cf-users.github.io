@@ -7,7 +7,7 @@ mod store;
 mod util;
 mod views;
 
-use components::{CopyLinkButton, ThemeToggle};
+use components::{CodeforcesLogo, CopyLinkButton, ThemeToggle};
 use leptos::prelude::*;
 use store::Route;
 use thaw::*;
@@ -83,13 +83,16 @@ fn App() -> impl IntoView {
                 <header style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:2px;">
                     <h1
                         title="Codeforces Explorer"
-                        style="margin:0;font-size:1.65em;cursor:pointer;"
+                        style="margin:0;font-size:1.65em;cursor:pointer;display:inline-flex;align-items:center;gap:10px;"
                         on:click=move |_| store::go(Route::User(None))
                     >
-                        <span style="background:linear-gradient(90deg,#0078d4,#aa00aa);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;">
-                            "Codeforces"
+                        <CodeforcesLogo size=30/>
+                        <span>
+                            <span style="background:linear-gradient(90deg,#0078d4,#aa00aa);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;">
+                                "Codeforces"
+                            </span>
+                            <span style="font-weight:300;">" Explorer"</span>
                         </span>
-                        <span style="font-weight:300;">" Explorer"</span>
                     </h1>
                     <Flex gap=FlexGap::Medium align=FlexAlign::Center>
                         <CopyLinkButton text={window().location().href().unwrap_or_default()}/>

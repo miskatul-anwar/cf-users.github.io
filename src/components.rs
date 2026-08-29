@@ -17,6 +17,33 @@ use thaw::*;
 // ---------------------------------------------------------------------------
 
 #[component]
+pub fn CodeforcesLogo(#[prop(default = 28)] size: u32) -> impl IntoView {
+    view! {
+        <svg
+            viewBox="0 0 24 24"
+            width=format!("{size}")
+            height=format!("{size}")
+            style="display:inline-block;vertical-align:middle;flex-shrink:0;"
+            aria-label="Codeforces"
+            role="img"
+        >
+            <path
+                fill="#FFC107"
+                d="M4.5 7.5a1.5 1.5 0 0 0-1.5 1.5v10.5a1.5 1.5 0 0 0 3 0V9a1.5 1.5 0 0 0-1.5-1.5z"
+            />
+            <path
+                fill="#1E88E5"
+                d="M12 1.5a1.5 1.5 0 0 0-1.5 1.5v16.5a1.5 1.5 0 0 0 3 0V3a1.5 1.5 0 0 0-1.5-1.5z"
+            />
+            <path
+                fill="#E53935"
+                d="M19.5 4.5a1.5 1.5 0 0 0-1.5 1.5v13.5a1.5 1.5 0 0 0 3 0V6a1.5 1.5 0 0 0-1.5-1.5z"
+            />
+        </svg>
+    }
+}
+
+#[component]
 pub fn SectionHeader(title: String) -> impl IntoView {
     view! {
         <div style="display:flex;align-items:center;gap:8px;margin:18px 0 6px;">
