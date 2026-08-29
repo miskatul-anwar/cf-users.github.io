@@ -74,11 +74,15 @@ pub fn ContestsView() -> impl IntoView {
 
     // Load the contest list once on mount (cached, already sorted by start).
     spawn_local(async move {
-        match api::contest_list_cached().await {
-            Ok(c) => contests.set(c),
-            Err(e) => error.set(e),
+        let res = api::contest_list_cached().await;
+        // The view may have been unmounted while the request was in flight.
+        if !contests.is_disposed() {
+            match res {
+                Ok(c) => contests.set(c),
+                Err(e) => error.set(e),
+            }
+            loading.set(false);
         }
-        loading.set(false);
     });
 
     let filtered = Memo::new(move |_| {
@@ -424,19 +428,22 @@ fn StandingsPanel(contest_id: i64) -> impl IntoView {
         loading.set(true);
         error.set(String::new());
         spawn_local(async move {
-            match api::contest_standings(
+            let res = api::contest_standings(
                 cid,
                 from,
                 count,
                 &handles.iter().map(String::as_str).collect::<Vec<_>>(),
                 unofficial,
             )
-            .await
-            {
-                Ok(r) => data.set(Some(r)),
-                Err(e) => error.set(e),
+            .await;
+            // The view may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(r) => data.set(Some(r)),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
             }
-            loading.set(false);
         });
     };
 
@@ -629,11 +636,15 @@ fn RatingChangesPanel(contest_id: i64) -> impl IntoView {
     Effect::new(move |_| {
         let cid = contest_id;
         spawn_local(async move {
-            match api::contest_rating_changes(cid).await {
-                Ok(c) => data.set(c),
-                Err(e) => error.set(e),
+            let res = api::contest_rating_changes(cid).await;
+            // The panel may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(c) => data.set(c),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
             }
-            loading.set(false);
         });
     });
 
@@ -709,11 +720,15 @@ fn HacksPanel(contest_id: i64) -> impl IntoView {
     Effect::new(move |_| {
         let cid = contest_id;
         spawn_local(async move {
-            match api::contest_hacks(cid).await {
-                Ok(h) => data.set(h),
-                Err(e) => error.set(e),
+            let res = api::contest_hacks(cid).await;
+            // The panel may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(h) => data.set(h),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
             }
-            loading.set(false);
         });
     });
 
@@ -782,11 +797,15 @@ fn ContestStatusPanel(contest_id: i64) -> impl IntoView {
         loading.set(true);
         error.set(String::new());
         spawn_local(async move {
-            match api::contest_status(cid, 1, count, Some(&handle)).await {
-                Ok(s) => data.set(s),
-                Err(e) => error.set(e),
+            let res = api::contest_status(cid, 1, count, Some(&handle)).await;
+            // The panel may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(s) => data.set(s),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
             }
-            loading.set(false);
         });
     };
 

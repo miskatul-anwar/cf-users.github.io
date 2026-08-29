@@ -1,3 +1,5 @@
 /target
 /dist
 .vercel
+.playwright-mcp
+

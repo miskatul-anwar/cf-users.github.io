@@ -40,7 +40,8 @@ pub fn ProblemsView() -> impl IntoView {
     let page = RwSignal::new(1usize);
     let picked = RwSignal::new(None::<api::Problem>);
 
-    Effect::new(move |_| match shared.get() {
+    let shared_for_effect = shared.clone();
+    Effect::new(move |_| match shared_for_effect.get() {
         store::SharedProblemset::Ready(arc) => problems.set((*arc).clone()),
         store::SharedProblemset::Error(e) => error.set(e),
         store::SharedProblemset::Loading => {}

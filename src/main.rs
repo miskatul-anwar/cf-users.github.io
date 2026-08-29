@@ -148,5 +148,8 @@ fn App() -> impl IntoView {
 }
 
 fn main() {
+    // Surface Rust panics in the browser console (message + source location)
+    // instead of an opaque `RuntimeError: unreachable` wasm trap.
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
     mount_to_body(App);
 }

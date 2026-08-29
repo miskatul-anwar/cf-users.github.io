@@ -47,11 +47,15 @@ fn RecentActions() -> impl IntoView {
         loading.set(true);
         error.set(String::new());
         spawn_local(async move {
-            match api::recent_actions_cached(max_count).await {
-                Ok(a) => data.set(a),
-                Err(e) => error.set(e),
+            let res = api::recent_actions_cached(max_count).await;
+            // The view may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(a) => data.set(a),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
             }
-            loading.set(false);
         });
     });
 
@@ -164,12 +168,16 @@ fn RatedList() -> impl IntoView {
         page.set(1);
         let active = active_only.get_untracked();
         spawn_local(async move {
-            match api::user_rated_list(active).await {
-                Ok(u) => data.set(u),
-                Err(e) => error.set(e),
+            let res = api::user_rated_list(active).await;
+            // The view may have been unmounted while the request was in flight.
+            if !data.is_disposed() {
+                match res {
+                    Ok(u) => data.set(u),
+                    Err(e) => error.set(e),
+                }
+                loading.set(false);
+                loaded.set(true);
             }
-            loading.set(false);
-            loaded.set(true);
         });
     };
 

@@ -76,12 +76,11 @@ async fn get<T: for<'de> Deserialize<'de>>(
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
     pub handle: String,
     pub email: Option<String>,
-    #[serde(rename = "vkId")]
     pub vk_id: Option<String>,
-    #[serde(rename = "openId")]
     pub open_id: Option<String>,
     #[serde(default)]
     pub first_name: Option<String>,
@@ -106,10 +105,39 @@ pub struct User {
     #[serde(default)]
     pub friend_of_count: i32,
     #[serde(default)]
+    pub avatar: String,
+    #[serde(default)]
     pub title_photo: String,
 }
 
+impl User {
+    pub fn photo_url(&self) -> String {
+        let raw = if !self.title_photo.is_empty() {
+            &self.title_photo
+        } else if !self.avatar.is_empty() {
+            &self.avatar
+        } else {
+            "https://userpic.codeforces.org/no-title.jpg"
+        };
+        if raw.starts_with("//") {
+            format!("https:{raw}")
+        } else {
+            raw.to_string()
+        }
+    }
+
+    pub fn full_name(&self) -> Option<String> {
+        match (&self.first_name, &self.last_name) {
+            (Some(f), Some(l)) if !f.is_empty() && !l.is_empty() => Some(format!("{f} {l}")),
+            (Some(f), _) if !f.is_empty() => Some(f.clone()),
+            (_, Some(l)) if !l.is_empty() => Some(l.clone()),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct RatingChange {
     #[serde(default)]
     pub contest_id: i64,
@@ -128,12 +156,14 @@ pub struct RatingChange {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Member {
     #[serde(default)]
     pub handle: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Party {
     #[serde(default)]
     pub members: Vec<Member>,
@@ -156,6 +186,7 @@ impl Party {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Problem {
     #[serde(default)]
     pub contest_id: Option<i64>,
@@ -165,7 +196,7 @@ pub struct Problem {
     pub index: String,
     #[serde(default)]
     pub name: String,
-    #[serde(default)]
+    #[serde(rename = "type", default)]
     pub problem_type: String,
     #[serde(default)]
     pub points: Option<f64>,
@@ -194,7 +225,12 @@ impl Problem {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ProblemStatistics {
+    #[serde(default)]
+    pub contest_id: Option<i64>,
+    #[serde(default)]
+    pub index: String,
     #[serde(default)]
     pub solved_count: i32,
     #[serde(default)]
@@ -202,6 +238,7 @@ pub struct ProblemStatistics {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Submission {
     #[serde(default)]
     pub id: i64,
@@ -239,12 +276,13 @@ impl Submission {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Contest {
     #[serde(default)]
     pub id: i64,
     #[serde(default)]
     pub name: String,
-    #[serde(default)]
+    #[serde(rename = "type", default)]
     pub contest_type: String,
     #[serde(default)]
     pub phase: String,
@@ -259,6 +297,7 @@ pub struct Contest {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ProblemResult {
     #[serde(default)]
     pub points: f64,
@@ -266,15 +305,16 @@ pub struct ProblemResult {
     pub penalty: f64,
     #[serde(default)]
     pub rejected_attempt_count: i32,
-    #[serde(default)]
+    #[serde(rename = "type", default)]
     pub problem_result_type: String,
     #[serde(default)]
     pub best_submission_time_seconds: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct StandingsRow {
-    #[serde(default)]
+    #[serde(alias = "rank", default)]
     pub position: i32,
     #[serde(default)]
     pub party: Party,
@@ -291,6 +331,7 @@ pub struct StandingsRow {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ContestStandingsResult {
     #[serde(default)]
     pub contest: Contest,
@@ -301,6 +342,7 @@ pub struct ContestStandingsResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Hack {
     #[serde(default)]
     pub id: i64,
@@ -315,6 +357,7 @@ pub struct Hack {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct BlogEntry {
     #[serde(default)]
     pub id: i64,
@@ -335,6 +378,7 @@ pub struct BlogEntry {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Comment {
     #[serde(default)]
     pub id: i64,
@@ -351,6 +395,7 @@ pub struct Comment {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct RecentAction {
     #[serde(default)]
     pub time_seconds: i64,
@@ -362,6 +407,7 @@ pub struct RecentAction {
 
 /// `problemset.problems` returns two parallel arrays.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ProblemSetResult {
     #[serde(default)]
     pub problems: Vec<Problem>,
@@ -605,4 +651,256 @@ pub async fn recent_actions_cached(max_count: u32) -> Result<Vec<RecentAction>, 
         &[("maxCount", max_count.to_string())],
     )
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_user_deserialization() {
+        let json = r#"{
+            "handle": "tourist",
+            "email": "tourist@example.com",
+            "firstName": "Gennady",
+            "lastName": "Korotkevich",
+            "country": "Belarus",
+            "city": "Gomel",
+            "organization": "ITMO University",
+            "contribution": 109,
+            "rank": "legendary grandmaster",
+            "rating": 3528,
+            "maxRank": "tourist",
+            "maxRating": 4009,
+            "lastOnlineTimeSeconds": 1788012225,
+            "registrationTimeSeconds": 1265987288,
+            "friendOfCount": 90514,
+            "avatar": "https://userpic.codeforces.org/422/avatar/2b5dbe87f0d859a2.jpg",
+            "titlePhoto": "https://userpic.codeforces.org/422/title/50a270ed4a722867.jpg"
+        }"#;
+
+        let user: User = serde_json::from_str(json).expect("deserialize user");
+        assert_eq!(user.handle, "tourist");
+        assert_eq!(user.first_name.as_deref(), Some("Gennady"));
+        assert_eq!(user.last_name.as_deref(), Some("Korotkevich"));
+        assert_eq!(user.full_name().as_deref(), Some("Gennady Korotkevich"));
+        assert_eq!(user.rating, Some(3528));
+        assert_eq!(user.max_rating, Some(4009));
+        assert_eq!(user.max_rank.as_deref(), Some("tourist"));
+        assert_eq!(user.last_online_time_seconds, 1788012225);
+        assert_eq!(user.registration_time_seconds, 1265987288);
+        assert_eq!(user.friend_of_count, 90514);
+        assert_eq!(
+            user.photo_url(),
+            "https://userpic.codeforces.org/422/title/50a270ed4a722867.jpg"
+        );
+    }
+
+    #[test]
+    fn test_rating_change_deserialization() {
+        let json = r#"{
+            "contestId": 2,
+            "contestName": "Codeforces Beta Round 2",
+            "handle": "tourist",
+            "rank": 14,
+            "ratingUpdateTimeSeconds": 1267124400,
+            "oldRating": 0,
+            "newRating": 1602
+        }"#;
+
+        let rc: RatingChange = serde_json::from_str(json).expect("deserialize rating change");
+        assert_eq!(rc.contest_id, 2);
+        assert_eq!(rc.contest_name, "Codeforces Beta Round 2");
+        assert_eq!(rc.handle, "tourist");
+        assert_eq!(rc.rank, 14);
+        assert_eq!(rc.rating_update_time_seconds, 1267124400);
+        assert_eq!(rc.old_rating, 0);
+        assert_eq!(rc.new_rating, 1602);
+    }
+
+    #[test]
+    fn test_problem_and_submission_deserialization() {
+        let json = r#"{
+            "id": 383013765,
+            "contestId": 2245,
+            "creationTimeSeconds": 1784221884,
+            "relativeTimeSeconds": 8783,
+            "problem": {
+                "contestId": 2245,
+                "index": "G",
+                "name": "NPC Challenge",
+                "type": "PROGRAMMING",
+                "points": 3500.0,
+                "rating": 3000,
+                "tags": ["divide and conquer", "interactive"]
+            },
+            "author": {
+                "contestId": 2245,
+                "members": [{"handle": "tourist"}],
+                "participantType": "CONTESTANT",
+                "ghost": false
+            },
+            "programmingLanguage": "C++23 (GCC 14-64, msys2)",
+            "verdict": "OK",
+            "passedTestCount": 39
+        }"#;
+
+        let sub: Submission = serde_json::from_str(json).expect("deserialize submission");
+        assert_eq!(sub.id, 383013765);
+        assert_eq!(sub.contest_id, Some(2245));
+        assert_eq!(sub.creation_time_seconds, 1784221884);
+        assert_eq!(sub.programming_language, "C++23 (GCC 14-64, msys2)");
+        assert_eq!(sub.verdict.as_deref(), Some("OK"));
+        assert_eq!(sub.passed_test_count, 39);
+        assert_eq!(sub.problem.problem_type, "PROGRAMMING");
+        assert_eq!(sub.problem.code(), "2245G");
+    }
+
+    #[test]
+    fn test_contest_and_standings_deserialization() {
+        let json = r#"{
+            "contest": {
+                "id": 566,
+                "name": "VK Cup 2015",
+                "type": "CF",
+                "phase": "FINISHED",
+                "durationSeconds": 10800,
+                "startTimeSeconds": 1438273200
+            },
+            "problems": [
+                {
+                    "contestId": 566,
+                    "index": "A",
+                    "name": "Matching Names",
+                    "type": "PROGRAMMING",
+                    "points": 1750.0,
+                    "rating": 2300,
+                    "tags": ["dfs and similar"]
+                }
+            ],
+            "rows": [
+                {
+                    "party": {
+                        "members": [{"handle": "rng_58"}],
+                        "participantType": "CONTESTANT",
+                        "ghost": false
+                    },
+                    "rank": 1,
+                    "points": 7974.0,
+                    "penalty": 0,
+                    "successfulHackCount": 1,
+                    "unsuccessfulHackCount": 0,
+                    "problemResults": [
+                        {
+                            "points": 1330.0,
+                            "rejectedAttemptCount": 0,
+                            "type": "FINAL",
+                            "bestSubmissionTimeSeconds": 3624
+                        }
+                    ]
+                }
+            ]
+        }"#;
+
+        let standings: ContestStandingsResult =
+            serde_json::from_str(json).expect("deserialize standings");
+        assert_eq!(standings.contest.id, 566);
+        assert_eq!(standings.contest.contest_type, "CF");
+        assert_eq!(standings.contest.duration_seconds, 10800);
+        assert_eq!(standings.rows.len(), 1);
+        assert_eq!(standings.rows[0].position, 1);
+        assert_eq!(standings.rows[0].successful_hack_count, 1);
+        assert_eq!(standings.rows[0].problem_results.len(), 1);
+        assert_eq!(
+            standings.rows[0].problem_results[0].problem_result_type,
+            "FINAL"
+        );
+    }
+
+    #[test]
+    fn test_unrated_user_defaults() {
+        let json = r#"{
+            "handle": "newbie_user",
+            "contribution": 0,
+            "lastOnlineTimeSeconds": 1525933227,
+            "friendOfCount": 0,
+            "titlePhoto": "https://userpic.codeforces.org/no-title.jpg",
+            "avatar": "https://userpic.codeforces.org/no-avatar.jpg",
+            "registrationTimeSeconds": 1513795921
+        }"#;
+
+        let user: User = serde_json::from_str(json).expect("deserialize unrated user");
+        assert_eq!(user.handle, "newbie_user");
+        assert_eq!(user.rating, None);
+        assert_eq!(user.rank, None);
+        assert_eq!(user.first_name, None);
+        assert_eq!(user.last_name, None);
+        assert_eq!(user.full_name(), None);
+        assert_eq!(
+            user.photo_url(),
+            "https://userpic.codeforces.org/no-title.jpg"
+        );
+    }
+
+    #[test]
+    fn test_blog_comment_recent_action() {
+        let json = r#"{
+            "timeSeconds": 1788018175,
+            "blogEntry": {
+                "id": 156291,
+                "title": "<p>AtCoder Beginner Contest 473 Announcement</p>",
+                "authorHandle": "atcoder_official",
+                "creationTimeSeconds": 1787914272,
+                "rating": -12,
+                "tags": []
+            },
+            "comment": {
+                "id": 1389033,
+                "creationTimeSeconds": 1788018175,
+                "commentatorHandle": "EchoHua0402",
+                "text": "<p>hello</p>",
+                "rating": 0
+            }
+        }"#;
+
+        let ra: RecentAction = serde_json::from_str(json).expect("deserialize recent action");
+        assert_eq!(ra.time_seconds, 1788018175);
+        let b = ra.blog_entry.expect("blog entry present");
+        assert_eq!(b.id, 156291);
+        assert_eq!(b.author_handle, "atcoder_official");
+        assert_eq!(b.rating, Some(-12));
+        let c = ra.comment.expect("comment present");
+        assert_eq!(c.id, 1389033);
+        assert_eq!(c.commentator_handle, "EchoHua0402");
+    }
+
+    #[test]
+    fn test_problemset_result_deserialization() {
+        let json = r#"{
+            "problems": [
+                {
+                    "contestId": 2257,
+                    "index": "F2",
+                    "name": "Beaver Track",
+                    "type": "PROGRAMMING",
+                    "points": 1000.0,
+                    "rating": 2700,
+                    "tags": ["data structures", "dp"]
+                }
+            ],
+            "problemStatistics": [
+                {
+                    "contestId": 2257,
+                    "index": "F2",
+                    "solvedCount": 45
+                }
+            ]
+        }"#;
+
+        let res: ProblemSetResult = serde_json::from_str(json).expect("deserialize problemset");
+        assert_eq!(res.problems.len(), 1);
+        assert_eq!(res.problem_statistics.len(), 1);
+        assert_eq!(res.problems[0].index, "F2");
+        assert_eq!(res.problem_statistics[0].solved_count, 45);
+    }
 }

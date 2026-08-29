@@ -140,52 +140,62 @@ pub fn CompareView(initial_a: Option<String>, initial_b: Option<String>) -> impl
             let h2 = h.clone();
             let h3 = h.clone();
             spawn_local(async move {
-                match api::user_info(&[h.as_str()]).await {
-                    Ok(u) => infos.update(|a| a[i] = u.into_iter().next()),
-                    Err(e) => errs.update(|a| a[i] = format!("{h}: {e}")),
+                let res = api::user_info(&[h.as_str()]).await;
+                // Bail out if the view was unmounted mid-request.
+                if !infos.is_disposed() {
+                    match res {
+                        Ok(u) => infos.update(|a| a[i] = u.into_iter().next()),
+                        Err(e) => errs.update(|a| a[i] = format!("{h}: {e}")),
+                    }
+                    finish(i);
                 }
-                finish(i);
             });
             spawn_local(async move {
-                match api::user_rating_cached(&h2).await {
-                    Ok(c) => changess.update(|a| a[i] = c),
-                    Err(e) => errs.update(|a| {
-                        if a[i].is_empty() {
-                            a[i] = format!("{h2}: {e}");
-                        }
-                    }),
+                let res = api::user_rating_cached(&h2).await;
+                if !changess.is_disposed() {
+                    match res {
+                        Ok(c) => changess.update(|a| a[i] = c),
+                        Err(e) => errs.update(|a| {
+                            if a[i].is_empty() {
+                                a[i] = format!("{h2}: {e}");
+                            }
+                        }),
+                    }
+                    finish(i);
                 }
-                finish(i);
             });
             if want_solves {
                 solves_loading.update(|a| a[i] = true);
                 spawn_local(async move {
-                    match api::user_status_cached(&h3, 2000).await {
-                        Ok(subs) => {
-                            let ok_count = subs
-                                .iter()
-                                .filter(|s| s.verdict.as_deref() == Some("OK"))
-                                .count();
-                            let solved: HashSet<String> = subs
-                                .iter()
-                                .filter(|s| s.verdict.as_deref() == Some("OK"))
-                                .map(|s| problem_key(s.contest_id, &s.problem.index))
-                                .collect();
-                            let stat = SolveStat {
-                                solved: solved.len() as i64,
-                                ok: ok_count as i64,
-                                subs: subs.len() as i64,
-                            };
-                            solves.update(|a| a[i] = Some(stat));
-                        }
-                        Err(e) => errs.update(|a| {
-                            if a[i].is_empty() {
-                                a[i] = format!("{h3}: {e}");
+                    let res = api::user_status_cached(&h3, 2000).await;
+                    if !solves.is_disposed() {
+                        match res {
+                            Ok(subs) => {
+                                let ok_count = subs
+                                    .iter()
+                                    .filter(|s| s.verdict.as_deref() == Some("OK"))
+                                    .count();
+                                let solved: HashSet<String> = subs
+                                    .iter()
+                                    .filter(|s| s.verdict.as_deref() == Some("OK"))
+                                    .map(|s| problem_key(s.contest_id, &s.problem.index))
+                                    .collect();
+                                let stat = SolveStat {
+                                    solved: solved.len() as i64,
+                                    ok: ok_count as i64,
+                                    subs: subs.len() as i64,
+                                };
+                                solves.update(|a| a[i] = Some(stat));
                             }
-                        }),
+                            Err(e) => errs.update(|a| {
+                                if a[i].is_empty() {
+                                    a[i] = format!("{h3}: {e}");
+                                }
+                            }),
+                        }
+                        solves_loading.update(|a| a[i] = false);
+                        finish(i);
                     }
-                    solves_loading.update(|a| a[i] = false);
-                    finish(i);
                 });
             }
         }

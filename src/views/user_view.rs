@@ -55,11 +55,17 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         users.set(Vec::new());
         let hs = handles.clone();
         spawn_local(async move {
-            match api::user_info(&hs.iter().map(String::as_str).collect::<Vec<_>>()).await {
-                Ok(u) => users.set(u),
-                Err(e) => err_info.set(e),
+            let res = api::user_info(&hs.iter().map(String::as_str).collect::<Vec<_>>()).await;
+            // The view may have been unmounted while the request was in flight
+            // (tab switch); touching its disposed signals then would panic and
+            // take every other queued task down with it.
+            if !users.is_disposed() {
+                match res {
+                    Ok(u) => users.set(u),
+                    Err(e) => err_info.set(e),
+                }
+                set_loading(0, false);
             }
-            set_loading(0, false);
         });
 
         // Remaining endpoints operate on the first handle.
@@ -70,11 +76,14 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         rating_changes.set(Vec::new());
         let h = primary.clone();
         spawn_local(async move {
-            match api::user_rating_cached(&h).await {
-                Ok(c) => rating_changes.set(c),
-                Err(e) => err_rating.set(e),
+            let res = api::user_rating_cached(&h).await;
+            if !rating_changes.is_disposed() {
+                match res {
+                    Ok(c) => rating_changes.set(c),
+                    Err(e) => err_rating.set(e),
+                }
+                set_loading(1, false);
             }
-            set_loading(1, false);
         });
 
         set_loading(2, true);
@@ -82,22 +91,28 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         let cnt: u32 = sub_count.get_untracked().parse().unwrap_or(50);
         let h = primary.clone();
         spawn_local(async move {
-            match api::user_status_cached(&h, cnt).await {
-                Ok(s) => submissions.set(s),
-                Err(e) => err_subs.set(e),
+            let res = api::user_status_cached(&h, cnt).await;
+            if !submissions.is_disposed() {
+                match res {
+                    Ok(s) => submissions.set(s),
+                    Err(e) => err_subs.set(e),
+                }
+                set_loading(2, false);
             }
-            set_loading(2, false);
         });
 
         set_loading(3, true);
         blogs.set(Vec::new());
         let h = primary.clone();
         spawn_local(async move {
-            match api::user_blog_entries(&h).await {
-                Ok(b) => blogs.set(b),
-                Err(e) => err_blogs.set(e),
+            let res = api::user_blog_entries(&h).await;
+            if !blogs.is_disposed() {
+                match res {
+                    Ok(b) => blogs.set(b),
+                    Err(e) => err_blogs.set(e),
+                }
+                set_loading(3, false);
             }
-            set_loading(3, false);
         });
 
         set_loading(4, true);
@@ -105,14 +120,17 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         solved_keys.set(None);
         let h = primary;
         spawn_local(async move {
-            match api::user_status_cached(&h, 2000).await {
-                Ok(s) => {
-                    solved_keys.set(Some(collect_solved_keys(&s)));
-                    analytics_subs.set(s);
+            let res = api::user_status_cached(&h, 2000).await;
+            if !analytics_subs.is_disposed() {
+                match res {
+                    Ok(s) => {
+                        solved_keys.set(Some(collect_solved_keys(&s)));
+                        analytics_subs.set(s);
+                    }
+                    Err(e) => err_analytics.set(e),
                 }
-                Err(e) => err_analytics.set(e),
+                set_loading(4, false);
             }
-            set_loading(4, false);
         });
     };
 
@@ -128,22 +146,34 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         }
     };
 
-    // Reload submissions when the count selector changes.
-    Effect::new(move |_| {
+    // Reload submissions when the count selector changes. The effect returns
+    // the count it handled, and bails out when it sees the same one again:
+    // thaw's <Select> re-sets its bound signal every time this section
+    // remounts, and reacting to that would flip `loading` here — which the
+    // section rendering also tracks — rebuilding the section, remounting the
+    // <Select>, and looping forever.
+    Effect::new(move |prev: Option<u32>| {
         let cnt: u32 = sub_count.get().parse().unwrap_or(50);
+        if prev == Some(cnt) {
+            return cnt;
+        }
         let handles = last_handles.get_untracked();
         if handles.is_empty() || loading.get_untracked()[2] {
-            return;
+            return cnt;
         }
         err_subs.set(String::new());
         set_loading(2, true);
         spawn_local(async move {
-            match api::user_status_cached(&handles[0], cnt).await {
-                Ok(s) => submissions.set(s),
-                Err(e) => err_subs.set(e),
+            let res = api::user_status_cached(&handles[0], cnt).await;
+            if !submissions.is_disposed() {
+                match res {
+                    Ok(s) => submissions.set(s),
+                    Err(e) => err_subs.set(e),
+                }
+                set_loading(2, false);
             }
-            set_loading(2, false);
         });
+        cnt
     });
 
     // Shareable profile deep link (never mutates the URL directly).
@@ -182,15 +212,18 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
         blog_link.set(format!("https://codeforces.com/blog/entry/{id}"));
         blog_open.set(true);
         spawn_local(async move {
-            match api::blog_entry_view(id).await {
-                Ok(b) => {
-                    blog_title.set(b.title.clone());
-                    blog_body.set(strip_html(b.content.as_deref().unwrap_or("(no content)")));
+            let view = api::blog_entry_view(id).await;
+            if !blog_open.is_disposed() {
+                match view {
+                    Ok(b) => {
+                        blog_title.set(b.title.clone());
+                        blog_body.set(strip_html(b.content.as_deref().unwrap_or("(no content)")));
+                    }
+                    Err(e) => blog_err.set(e),
                 }
-                Err(e) => blog_err.set(e),
-            }
-            if let Ok(cs) = api::blog_entry_comments(id).await {
-                blog_comment_list.set(cs);
+                if let Ok(cs) = api::blog_entry_comments(id).await {
+                    blog_comment_list.set(cs);
+                }
             }
         });
     };
@@ -213,7 +246,7 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
                 let max_rating = u.max_rating.unwrap_or(0);
                 let contribution = u.contribution;
                 let cc = if contribution >= 0 { "#008000" } else { "#ff0000" };
-                let org = u.organization.unwrap_or_else(|| "N/A".into());
+                let org = u.organization.clone().unwrap_or_else(|| "N/A".into());
                 let loc = match (u.country.clone(), u.city.clone()) {
                     (Some(c), Some(city)) => format!("{c}, {city}"),
                     (Some(c), None) => c,
@@ -227,11 +260,8 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
                 );
                 let online = format_time(u.last_online_time_seconds);
                 let friends = thousands(u.friend_of_count as i64);
-                let photo = if u.title_photo.is_empty() {
-                    "https://userpic.codeforces.org/no-title.jpg".to_string()
-                } else {
-                    u.title_photo.clone()
-                };
+                let photo = u.photo_url();
+                let full_name = u.full_name();
                 let rating_s =
                     if rating > 0 { rating.to_string() } else { "\u{2014}".to_string() };
                 let max_pill: AnyView = if max_rating > 0 {
@@ -257,6 +287,7 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
                                     src=photo
                                     style="width:100%;border-radius:8px;border:1px solid rgba(128,128,128,0.25);"
                                     alt="avatar"
+                                    loading="lazy"
                                 />
                                 <Text style="font-size:1.2em;font-weight:700;">
                                     <a
@@ -268,6 +299,9 @@ pub fn UserView(initial_handle: Option<String>) -> impl IntoView {
                                         {handle.clone()}
                                     </a>
                                 </Text>
+                                {full_name.map(|name| view! {
+                                    <Caption1 style="color:rgba(128,128,128,0.85);font-size:0.95em;margin-top:-4px;">{name}</Caption1>
+                                })}
                                 {chip}
                                 <Caption1 style=format!("color:{mrc};font-weight:600;")>
                                     {format!("Max: {max_rank}")}

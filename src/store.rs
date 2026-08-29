@@ -152,24 +152,32 @@ pub enum SharedProblemset {
 }
 
 thread_local! {
-    static PROBLEMSET: RefCell<Option<RwSignal<SharedProblemset>>> = const { RefCell::new(None) };
+    static PROBLEMSET: RefCell<Option<ArcRwSignal<SharedProblemset>>> =
+        const { RefCell::new(None) };
 }
 
 /// Lazily-fetched full problem set shared across views.
-pub fn problemset() -> RwSignal<SharedProblemset> {
+///
+/// This must stay an [`ArcRwSignal`] (heap-allocated, not arena-owned): the
+/// signal is first created wherever it happens to be read from — often inside
+/// a render effect — and an arena-backed `RwSignal` would be disposed as soon
+/// as that transient owner cleans up, leaving the cached handle here dangling
+/// (reading it then panics and takes down every other queued API task).
+pub fn problemset() -> ArcRwSignal<SharedProblemset> {
     PROBLEMSET.with(|p| {
         let mut slot = p.borrow_mut();
         if let Some(sig) = slot.as_ref() {
-            return *sig;
+            return sig.clone();
         }
-        let sig = RwSignal::new(SharedProblemset::Loading);
+        let sig = ArcRwSignal::new(SharedProblemset::Loading);
+        let updater = sig.clone();
         spawn_local(async move {
             match api::problemset_problems_cached().await {
-                Ok(res) => sig.set(SharedProblemset::Ready(std::sync::Arc::new(res.problems))),
-                Err(e) => sig.set(SharedProblemset::Error(e)),
+                Ok(res) => updater.set(SharedProblemset::Ready(std::sync::Arc::new(res.problems))),
+                Err(e) => updater.set(SharedProblemset::Error(e)),
             }
         });
-        *slot = Some(sig);
+        *slot = Some(sig.clone());
         sig
     })
 }
