@@ -80,7 +80,7 @@ fn App() -> impl IntoView {
     view! {
         <ConfigProvider theme=theme>
             <div style="max-width:1150px;margin:0 auto;padding:10px 16px 56px;">
-                <header style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:2px;">
+                <header style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
                     <h1
                         title="Codeforces Explorer"
                         style="margin:0;font-size:1.65em;cursor:pointer;display:inline-flex;align-items:center;gap:10px;"
@@ -107,9 +107,6 @@ fn App() -> impl IntoView {
                         </a>
                     </Flex>
                 </header>
-                <p style="text-align:center;color:#888;margin:0 0 12px;">
-                    "Profiles, analytics, comparisons, contests, problems and the live feed \u{2014} powered by the Codeforces API."
-                </p>
 
                 <TabList selected_value=tab>
                     <Tab value="user">"User"</Tab>
